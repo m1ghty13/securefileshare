@@ -1,67 +1,96 @@
-# XivoraShare
+# 🔐 XivoraShare
 
-Zero-knowledge one-time encrypted file transfer for the web.
+**Одноразовая передача файлов с шифрованием прямо в браузере.**  
+Сервер никогда не видит ваши ключи, имя файла или секретную фразу.
 
-**Made by Xivora**
-
-**The server never sees your keys, your file name, or your secret phrase.**
-
----
-
-## How it works
-
-1. You pick a file → your browser generates **12 secret words**
-2. The file is encrypted locally with **XChaCha20-Poly1305**
-3. The browser derives a key from the phrase using **Argon2id** (t=3, m=64 MB, p=4)
-4. Only the ciphertext + wrapped key reach the server
-5. Recipient opens the link, enters the 12 words → file decrypts in their browser
-6. File auto-deletes after the time limit or max download count
+> Made by **Xivora**
 
 ---
 
-## Stack
+## Что это?
 
-| Layer | Technology |
+XivoraShare — это веб-сервис для безопасной одноразовой отправки файлов. Вся криптография происходит **на стороне клиента**: сервер хранит только зашифрованный мусор и не может его расшифровать, даже если захочет.
+
+Вы загружаете файл → получаете ссылку и 12 секретных слов → отправляете ссылку одним каналом, слова другим → получатель вводит слова → файл расшифровывается в его браузере.
+
+**Файл автоматически удаляется** после скачивания или по истечении времени.
+
+---
+
+## Как работает шифрование
+
+```
+12 слов → Argon2id(phrase, salt) → DerivedKey (256-bit)
+                                         ↓
+                              FileKey (random 256-bit)
+                             /           |            \
+                     encrypt file   encrypt name   wrap FileKey
+                         ↓              ↓               ↓
+                    [ciphertext]  [encrypted_name]  [wrapped_key]
+                         ↓              ↓               ↓
+                    ──────── всё это уходит на сервер ────────
+```
+
+| Шаг | Что происходит |
+|-----|----------------|
+| 1 | Браузер генерирует **12 случайных слов** (BIP-39, 132 бита энтропии) |
+| 2 | Из слов выводится ключ через **Argon2id** (t=3, m=64 MB, p=4) |
+| 3 | Генерируется случайный **FileKey** (32 байта) |
+| 4 | Файл и его имя шифруются **XChaCha20-Poly1305** с FileKey |
+| 5 | FileKey оборачивается (шифруется) DerivedKey |
+| 6 | На сервер уходят только шифротексты + обёрнутый ключ + соль + nonce |
+
+**Без 12 слов расшифровка невозможна** — ни для сервера, ни для администратора, ни для кого-либо.
+
+---
+
+## Что сервер знает и НЕ знает
+
+| Сервер **хранит** | Сервер **НЕ знает** |
 |---|---|
-| Frontend | React 18 + Vite 5 |
-| Styling | Tailwind CSS + Framer Motion |
-| File cipher | XChaCha20-Poly1305 (`@noble/ciphers`) |
-| KDF | Argon2id (`hash-wasm` WASM) |
-| Backend | Node.js + Fastify 4 |
-| Database | SQLite (`better-sqlite3`) |
-| Storage | Local filesystem |
-
-**Why Vite + Fastify instead of Next.js?** Clean separation ensures client-side crypto can be audited independently of server code. The server is a pure "store encrypted bytes" service with no awareness of keys.
+| Зашифрованный файл (мусор) | Содержимое файла |
+| Обёрнутый ключ (бесполезен без фразы) | Ключ шифрования |
+| Соль (не секрет) | Секретную фразу (12 слов) |
+| Зашифрованное имя файла | Имя файла |
+| Nonce-ы (не секрет) | DerivedKey |
 
 ---
 
-## Quick start (Docker)
+## Стек технологий
+
+| | Технология |
+|---|---|
+| 🖥️ Frontend | React 18, Vite 5, Tailwind CSS, Framer Motion |
+| 🔒 Шифрование | XChaCha20-Poly1305 ([`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers)) |
+| 🔑 KDF | Argon2id ([`hash-wasm`](https://github.com/nicolo-ribaudo/nicolo-ribaudo/nicolo-ribaudo) — WASM в браузере) |
+| ⚙️ Backend | Node.js 22+, Fastify 4 |
+| 🗄️ БД | SQLite (встроенный `node:sqlite`) |
+| 📦 Деплой | Docker Compose, GitHub Actions |
+
+---
+
+## Быстрый старт
+
+### Docker (рекомендуется)
 
 ```bash
-git clone <repo>
-cd secureshare
+git clone https://github.com/m1ghty13/securefileshare.git
+cd securefileshare
 docker compose up --build
 ```
 
-Frontend → http://localhost:5173  
-Backend  → http://localhost:3001
+- Frontend → http://localhost:5173
+- Backend → http://localhost:3001
 
----
-
-## Local development
-
-**Backend**
+### Локально
 
 ```bash
+# Backend
 cd backend
-cp .env.example .env
 npm install
-npm run dev
-```
+node src/server.js
 
-**Frontend**
-
-```bash
+# Frontend (в другом терминале)
 cd frontend
 npm install
 npm run dev
@@ -69,97 +98,73 @@ npm run dev
 
 ---
 
-## Tests
+## Тесты
 
 ```bash
-# Backend (API + cleanup worker — 11 tests)
+# Backend — 15 тестов (API + cleanup worker)
 cd backend && npm test
 
-# Frontend (crypto unit tests — 20 tests)
+# Frontend — 24 теста (криптография)
 cd frontend && npm test
 ```
 
----
-
-## API Contract
-
-### `POST /api/upload/init`
-Creates an upload slot. Returns `{ id, upload_token }`.
-
-**Body:**
-```json
-{
-  "salt":           "base64url",
-  "nonce_file":     "base64url",
-  "nonce_wrap":     "base64url",
-  "wrapped_key":    "base64url",
-  "nonce_name":     "base64url",
-  "encrypted_name": "base64url",
-  "size":           12345,
-  "expires_in":     "1h",
-  "max_downloads":  1
-}
-```
-
-`expires_in`: `"10m"` | `"1h"` | `"24h"`  
-`max_downloads`: `1` | `2` | `5`
+Всего **39 тестов**: полное покрытие всех криптографических функций, API эндпоинтов и фоновой очистки.
 
 ---
 
-### `POST /api/upload/complete/:upload_token`
-Uploads the raw ciphertext as `multipart/form-data`. Returns `{ id }`.
+## Скриншоты
+
+<details>
+<summary>📤 Загрузка файла</summary>
+
+Drag & drop → выбор времени жизни и лимита скачиваний → шифрование → готово.
+
+</details>
+
+<details>
+<summary>🔑 Секретная фраза</summary>
+
+12 слов отображаются после загрузки. Можно скопировать или скачать как `.txt` файл.
+
+</details>
+
+<details>
+<summary>📥 Скачивание</summary>
+
+Получатель вводит 12 слов → файл расшифровывается прямо в браузере → автозагрузка.
+
+</details>
 
 ---
 
-### `GET /api/file/:id/meta`
-Returns all public parameters needed for client decryption. **Never returns keys.**
+## Безопасность
 
-```json
-{
-  "id": "...",
-  "salt": "base64url",
-  "nonce_file": "base64url",
-  "nonce_wrap": "base64url",
-  "wrapped_key": "base64url",
-  "nonce_name": "base64url",
-  "encrypted_name": "base64url",
-  "file_size": 12345,
-  "expires_at": 1735000000,
-  "max_downloads": 1,
-  "downloads_remaining": 1,
-  "created_at": 1734996400
-}
-```
+- **Шифрование только на клиенте** — Argon2id и XChaCha20-Poly1305 работают в браузере
+- **Zero-knowledge сервер** — хранит только шифротексты, без возможности расшифровки
+- **Ссылка ≠ доступ** — без 12 слов ссылка бесполезна
+- **Rate limiting** — по хешу IP (сырые IP никогда не логируются)
+- **Без аналитики, куков и трекинга**
+- **Автоудаление** — cleanup worker каждые 60 секунд
 
 ---
 
-### `GET /api/file/:id/download`
-Streams raw ciphertext (`application/octet-stream`). No keys.
+## Криптографические параметры
+
+| Параметр | Значение |
+|---|---|
+| Симметричный шифр | XChaCha20-Poly1305 (256-bit key, 192-bit nonce) |
+| KDF | Argon2id (t=3, m=65536 KiB, p=4, output=32 bytes) |
+| Энтропия фразы | 12 × 11 = **132 бита** (> 128-bit security level) |
+| Nonce файла | 24 байта (random) |
+| Соль Argon2id | 16 байт (random) |
+| AEAD тег | 16 байт Poly1305 (аутентификация каждого байта) |
 
 ---
 
-### `POST /api/file/:id/confirm_download`
-Called after successful client-side decryption. Decrements counter; deletes file at 0.
+## Лицензия
+
+MIT
 
 ---
 
-### `POST /api/file/:id/report_failed_download`
-Called when client decryption fails. **Counter is not decremented** — the download attempt failed.
-
----
-
-## Security design
-
-- **Client-only keys** — Argon2id, XChaCha20-Poly1305 run entirely in the browser
-- **Zero server knowledge** — server holds only ciphertext + wrapped key  
-- **Separate link and phrase** — URL and phrase are independent; intercepting one is useless
-- **Rate limiting** — per hashed-IP in memory; raw IPs never logged  
-- **No analytics, no cookies, no tracking**
-- **Auto-delete** — cleanup worker runs every 60 s
-
----
-
-## Entropy
-
-12 words × 11 bits = **132 bits of entropy**  
-This exceeds the 128-bit security level of the underlying symmetric cipher.
+<p align="center"><sub>made by <b>Xivora</b></sub></p>
