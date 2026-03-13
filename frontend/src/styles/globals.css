@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables ───────────────────────────────────────────── */
+:root {
+  --bg:        #fafafa;
+  --card:      #ffffff;
+  --border:    #e5e7eb;
+  --text:      #111827;
+  --muted:     #6b7280;
+  --brand:     #4f46e5;
+  --brand-glow:rgba(99,102,241,0.25);
+  --success:   #059669;
+  --error:     #dc2626;
+}
+
+.dark {
+  --bg:        #0f0f10;
+  --card:      #1a1a1f;
+  --border:    #2a2a30;
+  --text:      #f1f5f9;
+  --muted:     #94a3b8;
+  --brand:     #6366f1;
+  --brand-glow:rgba(99,102,241,0.3);
+  --success:   #10b981;
+  --error:     #f87171;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+/* ── Brand Button ────────────────────────────────────────────── */
+.btn-brand {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white transition-all duration-200;
+  background: var(--brand);
+  box-shadow: 0 0 0 0 var(--brand-glow);
+}
+.btn-brand:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 20px 4px var(--brand-glow);
+  transform: translateY(-1px);
+}
+.btn-brand:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Ghost Button ────────────────────────────────────────────── */
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium transition-all duration-200;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+/* ── Danger Button ───────────────────────────────────────────── */
+.btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold text-white transition-all duration-200;
+  background: var(--error);
+}
+.btn-danger:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Word chip ───────────────────────────────────────────────── */
+.word-chip {
+  @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-mono text-sm font-medium select-all;
+  background: var(--border);
+  color: var(--text);
+  border: 1px solid transparent;
+}
+.word-chip:hover {
+  border-color: var(--brand);
+}
+
+/* ── Input ───────────────────────────────────────────────────── */
+.input-field {
+  @apply w-full rounded-xl px-4 py-2.5 text-sm font-mono outline-none transition-all duration-200;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.input-field:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-track {
+  @apply h-2 w-full overflow-hidden rounded-full;
+  background: var(--border);
+}
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-300 ease-out;
+  background: linear-gradient(90deg, var(--brand), #a78bfa);
+}
+
+/* ── Dropzone ────────────────────────────────────────────────── */
+.dropzone {
+  @apply relative w-full rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-200 cursor-pointer overflow-hidden;
+  border-color: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dropzone:hover, .dropzone.active {
+  border-color: var(--brand);
+  background: var(--brand-glow);
+}
+
+/* ── Step indicator ──────────────────────────────────────────── */
+.step-dot {
+  @apply w-2.5 h-2.5 rounded-full transition-all duration-300;
+  background: var(--border);
+}
+.step-dot.active {
+  @apply w-5;
+  background: var(--brand);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Shimmer loading ─────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--muted) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Glow ring on focus-visible ──────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

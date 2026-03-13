@@ -1,0 +1,21 @@
+{
+  "name": "xivorashare-backend",
+  "version": "1.0.0",
+  "description": "XivoraShare backend — one-time encrypted file transfer",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test tests/api.test.js tests/cleanup.test.js",
+    "lint": "node --check src/**/*.js || true"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@fastify/multipart": "^8.3.0",
+    "@fastify/rate-limit": "^9.1.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {}
+}
