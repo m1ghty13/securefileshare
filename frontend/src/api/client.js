@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const BASE = import.meta.env.VITE_API_BASE_URL ?? 'https://xivorabackend-xivora.amvera.io'
 
 const api = axios.create({
   baseURL: BASE,

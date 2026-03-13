@@ -1,0 +1,18 @@
+meta:
+  environment: node
+  toolchain:
+    name: npm
+    version: "22"
+build:
+  skip: false
+  additionalCommands: null
+  artifacts:
+    "*": /
+run:
+  scriptName: ""
+  scriptArguments: null
+  nodeArguments: null
+  command: node src/server.js
+  persistenceMount: /data
+  containerPort: "3001"
+  servicePort: "80"
