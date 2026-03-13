@@ -26,7 +26,8 @@ export default function Result() {
   if (!state?.id) return null
 
   const { id, words } = state
-  const shareUrl = `${window.location.origin}/f/${id}`
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const shareUrl = `${window.location.origin}${base}/f/${id}`
 
   async function copyLink() {
     await navigator.clipboard.writeText(shareUrl)
