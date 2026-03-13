@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/securefileshare/',
   plugins: [react()],
   optimizeDeps: {
     // hash-wasm bundles WASM as base64 — exclude from pre-bundling to avoid issues

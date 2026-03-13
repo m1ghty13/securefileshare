@@ -8,7 +8,7 @@ import Privacy from './pages/Privacy.jsx'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Layout>
         <AnimatePresence mode="wait">
           <Routes>
